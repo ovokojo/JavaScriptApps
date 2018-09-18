@@ -6,14 +6,17 @@ const clearTasks = document.querySelector('.clear-tasks');
 
 loadEventListeners();
 
+
 function loadEventListeners(){
 
   // Add tasks
+  document.addEventListener('DOMContentLoaded', getTasks);
   form.addEventListener('submit', addTask);
   filter.addEventListener('keyup', filterTasks);
   taskList.addEventListener('click', removeTask);
   clearTasks.addEventListener('click', clearAllTasks);
 }
+
 
 function addTask(e){
 
@@ -35,8 +38,48 @@ function addTask(e){
 
     //Add list item to taskList
     taskList.appendChild(li);
+
+    //add to LS
+    addTaskToLocalStorage(task.value);
     task.value = "";
   }
+}
+
+function addTaskToLocalStorage(task){
+  let tasks;
+
+  if (localStorage.getItem('tasks') === null) {
+    tasks = [];
+  } else {
+    tasks = JSON.parse(localStorage.getItem('tasks'));
+  }
+  tasks.push(task);
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function getTasks(){
+  let tasks;
+
+  if (localStorage.getItem('tasks') === null) {
+    tasks = [];
+  } else {
+    tasks = JSON.parse(localStorage.getItem('tasks'));
+  }
+
+  tasks.forEach(function(task){
+    const li = document.createElement("li");
+    li.className = 'collection-item';
+    li.appendChild(document.createTextNode(task));
+
+    //Add remove icons
+    const link = document.createElement("a");
+    link.className = "delete-item secondary-content";
+    link.innerHTML = ('<i class="fa fa-remove"></i>');
+    li.appendChild(link);
+
+    //Add list item to taskList
+    taskList.appendChild(li);
+  });
 }
 
 //filter tasks
@@ -63,8 +106,25 @@ function removeTask(e){
   if (e.target === removeItem){
     if(confirm('Are you sure?')){
       e.target.parentElement.parentElement.remove();
+      // remove from LS
+      removeTaskFromLS(e.target.parentElement.parentElement);
     }
   }
+}
+//Delete from LS
+function removeTaskFromLS(taskItem){
+  let tasks;
+  if (localStorage.getItem('tasks') === null) {
+    tasks = [];
+  } else {
+    tasks = JSON.parse(localStorage.getItem('tasks'));
+  }
+  tasks.forEach(function(task, index){
+    if (taskItem.textContent === task) {
+      tasks.splice(index, 1);
+    }
+  });
+  localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
 // Delete all tasks
@@ -72,6 +132,7 @@ function removeTask(e){
 function clearAllTasks(e){
   if (e.target.classList.contains('clear-tasks')) {
     if(confirm('Are you sure??')){
+      localStorage.clear();
       const allTasks = document.querySelectorAll('.collection-item');
       allTasks.forEach(function(task){
         task.remove();
